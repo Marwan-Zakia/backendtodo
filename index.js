@@ -7,15 +7,11 @@ const jwt = require("jsonwebtoken");
 const SECRET = process.env.SECRET || "secret";
 const PORT = process.env.PORT || 5000;
 const { Sequelize, DataTypes } = require("sequelize");
-const basicAuth = require('../backendtodo/middleware/basic');
-const bearerAuth = require('../backendtodo/middleware/bearer');
-const permissions = require('../backendtodo/middleware/acl.js')
 const cors = require("cors");
 const Collection = require("./collection");
+const base64 = require("base-64");
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 
 const DATABASE_URI =
   process.env.NODE_ENV === "test" ? "sqlite:memory:" : process.env.DATABASE_URL;
@@ -84,20 +80,20 @@ const Users = (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         const acl = {
-          admin: ["read", "write", "delete", "update"],
+          admin: ["create", "read", "update", "delete"],
           editor: ["read", "update"],
           writer: ["create"],
         };
         return acl[this.role];
       },
     },
-  
   });
 
   userModel.beforeCreate(async (user) => {
     let hashedPass = await bcrypt.hash(user.password, 10);
     user.password = hashedPass;
   });
+
   userModel.BasicAuth = async function (username, password) {
     const user = await this.findOne({ where: { username } });
     const valid = await bcrypt.compare(password, user.password);
@@ -122,27 +118,72 @@ const Users = (sequelize, DataTypes) => {
 
   return userModel;
 };
+async function Basic(req, res, next) {
+  const encodedHeaders = req.headers.authorization.split(" ")[1];
+  const [username, password] = base64.decode(encodedHeaders).split(":");
+  console.log(username, password);
+  console.log(usersModel);
+  usersModel
+    .BasicAuth(username, password)
+    .then((validUser) => {
+      req.user = validUser;
+      next();
+    })
+    .catch((err) => {
+      console.log(err), next("Invalid 1Login");
+    });
+}
 
-const users = Users(sequelize, DataTypes);
-console.log(users)
-const newUserCollection = new Collection(users);
-console.log(newUserCollection)
+async function bear(req, res, next) {
+  try {
+    if (!req.headers.authorization) {
+      _authError();
+    }
+
+    const token = req.headers.authorization.split(" ").pop();
+    const validUser = await usersModel.authToken(token);
+    req.user = validUser;
+    req.token = validUser.token;
+    next();
+  } catch (e) {
+    console.log(e);
+  }
+}
+function acl(capability) {
+  return (req, res, next) => {
+    try {
+      if (req.user.capabilities.includes(capability)) {
+        next();
+      } else {
+        next("Access Denied");
+      }
+    } catch (e) {
+      next("Invalid Login", req.user);
+    }
+  };
+}
+
+const usersModel = Users(sequelize, DataTypes);
+const newUserCollection = new Collection(usersModel);
+console.log(newUserCollection);
 const newTodo = Todo(sequelize, DataTypes);
 const todoCollection = new Collection(newTodo);
 
-app.get("/api/todos", async (req, res) => {
+app.use(express.urlencoded({ extended: true }));
+
+app.get("/api/todos", bear, acl("read"), async (req, res) => {
   const id = parseInt(req.params.id);
   let todoItem = await todoCollection.read(id);
   res.status(200).json(todoItem);
 });
 
-app.post("/api/todos", async (req, res) => {
+app.post("/api/todos", bear, acl("create"), async (req, res) => {
   let newCusInfo = req.body;
   let todoItem = await todoCollection.create(newCusInfo);
   res.status(201).json(todoItem);
 });
 
-app.put("/api/todos/:id", async (req, res) => {
+app.put("/api/todos/:id", bear, acl("update"), async (req, res) => {
   const id = parseInt(req.params.id);
   const obj = req.body;
   let todoItem = await todoCollection.update(id, obj);
@@ -150,16 +191,14 @@ app.put("/api/todos/:id", async (req, res) => {
   res.status(201).json(todoItem);
 });
 
-app.delete("/api/todos/:id", async (req, res) => {
+app.delete("/api/todos/:id", bear, acl("delete"), async (req, res) => {
   const id = parseInt(req.params.id);
   let todoItem = await todoCollection.delete(id);
   res.status(204).json(todoItem);
 });
-
 app.post("/signup", async (req, res, next) => {
-  console.log(users);
   try {
-    let userRecord = await users.create(req.body);
+    let userRecord = await newUserCollection.create(req.body);
     const output = {
       user: userRecord,
       token: userRecord.token,
@@ -170,11 +209,11 @@ app.post("/signup", async (req, res, next) => {
   }
 });
 
-app.post("/sign-in", basicAuth, async (req, res, next) => {
+app.post("/sign-in", Basic, async (req, res, next) => {
   res.status(200).json(req.user);
 });
-app.get("/users", bearerAuth, permissions("delete"), async (req, res, next) => {
-  const userRecords = await users.findAll({});
+app.get("/users", bear, acl("delete"), async (req, res, next) => {
+  const userRecords = await newUserCollection.findAll({});
   const list = userRecords.map((user) => user.username);
   res.status(200).json(list);
 });
@@ -188,4 +227,4 @@ sequelize
   })
   .catch(console.error);
 
-module.exports = { Users: users, newUserCollection };
+module.exports = usersModel;
