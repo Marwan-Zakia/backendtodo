@@ -12,7 +12,10 @@ const Collection = require("./collection");
 const base64 = require("base-64");
 // app.use(cors());
 app.use(express.json());
+
 app.use(cors({ origin: '*' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 
 
@@ -32,8 +35,6 @@ let sequelizeOptions =
     : {};
 
 const sequelize = new Sequelize(DATABASE_URI, sequelizeOptions);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 const Todo = (sequelize, DataTypes) =>
   sequelize.define("todo", {
