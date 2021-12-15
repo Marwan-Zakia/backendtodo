@@ -10,7 +10,7 @@ const { Sequelize, DataTypes } = require("sequelize");
 const cors = require("cors");
 const Collection = require("./collection");
 const base64 = require("base-64");
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 app.use(cors({ origin: '*' }));
 
