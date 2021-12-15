@@ -103,6 +103,7 @@ const Users = (sequelize, DataTypes) => {
   });
 
   userModel.BasicAuth = async function (username, password) {
+
     const user = await this.findOne({ where: { username } });
     const valid = await bcrypt.compare(password, user.password);
     if (valid) {
@@ -127,12 +128,14 @@ const Users = (sequelize, DataTypes) => {
   return userModel;
 };
 async function Basic(req, res, next) {
-  const encodedHeaders = req.headers.authorization.split(" ")[1];
+  console.log('req',req.headers.authorization)
+    const encodedHeaders = req.headers.authorization.split(" ")[1];
+  console.log('encodedHeaders',encodedHeaders);
   const [username, password] = base64.decode(encodedHeaders).split(":");
+  
   console.log(username, password);
-  console.log(usersModel);
-  usersModel
-    .BasicAuth(username, password)
+    usersModel
+.BasicAuth(username, password)
     .then((validUser) => {
       req.user = validUser;
       next();
