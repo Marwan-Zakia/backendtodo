@@ -1,0 +1,40 @@
+{
+  "name": "backendtodo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "NODE_ENV=production node index.js",
+    "init:config": "sequelize init:config",
+    "db:create": "sequelize db:create",
+    "watch": "nodemon index.js",
+    "test": "NODE_ENV=test jest",
+    "dev": "NODE_ENV=development nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Marwan-Zakia/backendtodo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Marwan-Zakia/backendtodo/issues"
+  },
+  "homepage": "https://github.com/Marwan-Zakia/backendtodo#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "pg": "^8.7.1",
+    "postgres": "^1.0.2",
+    "sequelize": "^6.12.0-beta.3",
+    "sequelize-cli": "^6.3.0",
+    "sqlite3": "^5.0.2",
+    "superagent": "^6.1.0",
+    "base-64": "^1.0.0",
+    "jsonwebtoken": "^8.5.1",
+     "morgan": "^1.10.0",
+     "bcrypt": "^5.0.1"
+  }
+}
