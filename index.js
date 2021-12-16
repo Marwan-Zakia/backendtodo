@@ -44,6 +44,7 @@ const Todo = (sequelize, DataTypes) =>
   sequelize.define("todo", {
     id: {
       type: DataTypes.STRING,
+    primaryKey: true,
     },
     assignee: {
       type: DataTypes.STRING,
