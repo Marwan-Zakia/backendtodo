@@ -42,6 +42,9 @@ const sequelize = new Sequelize(DATABASE_URI, sequelizeOptions);
 
 const Todo = (sequelize, DataTypes) =>
   sequelize.define("todo", {
+    id: {
+      type: DataTypes.STRING,
+    },
     assignee: {
       type: DataTypes.STRING,
       allowNull: false,
