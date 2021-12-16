@@ -187,7 +187,7 @@ const todoCollection = new Collection(newTodo);
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/api/todos", bear, acl("read"), async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = req.params.id;
   let todoItem = await todoCollection.read(id);
   res.status(200).json(todoItem);
 });
@@ -199,7 +199,7 @@ app.post("/api/todos", bear, acl("create"), async (req, res) => {
 });
 
 app.put("/api/todos/:id", bear, acl("update"), async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = req.params.id;
   const obj = req.body;
   let todoItem = await todoCollection.update(id, obj);
 
@@ -207,7 +207,7 @@ app.put("/api/todos/:id", bear, acl("update"), async (req, res) => {
 });
 
 app.delete("/api/todos/:id", bear, acl("delete"), async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = req.params.id;
   let todoItem = await todoCollection.delete(id);
   res.status(204).json(todoItem);
 });
